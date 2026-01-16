@@ -709,7 +709,7 @@
     <script>
         window.addEventListener('contextmenu', e => e.preventDefault());
 
-        const STORAGE_KEY = 'manna_catcher_v2';
+        const STORAGE_KEY = 'manna_catcher_v2.3';
 
         const bgm = document.getElementById('bgm');
         const sfxCollect = document.getElementById('sfx-collect');
@@ -777,7 +777,15 @@
                 'char_david': 'char_david.png',
                 'char_default': 'char_default.png',
                 'char_miriam': 'char_miriam.png',
-                'char_moses': 'char_moses.png'
+                'char_moses': 'char_moses.png',
+                'idol': 'idol.png',
+                'snake': 'snake.png',
+                'shekel': 'shekel.png',
+                'scroll': 'scroll.png',
+                'bitter_water': 'bitter_water.png',
+                'manna': 'manna.png',
+                'quail': 'quail.png',
+                'magnet': 'magnet.png'
             },
             audio: {
                 'bgm': 'bgm.mp3',
@@ -1316,63 +1324,23 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
 
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 3;
+                const img = loadedAssets.images[this.type];
+                if (img) {
+                    // [수정 v2.2] 모든 아이템 이미지 적용 및 1.7배 확대
+                    const scaleFactor = 1.7;
+                    // 기본 크기 설정 (아이템별 미세 조정이 필요하면 여기서 분기)
+                    let baseSize = 30;
+                    if (this.type === 'quail' || this.type === 'magnet') baseSize = 35;
 
-                if (this.type === 'manna') {
-                    ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = '#fff'; ctx.fill();
-                } else if (this.type === 'shekel') {
-                    ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2);
-                    const grad = ctx.createLinearGradient(-10, -10, 10, 10);
-                    grad.addColorStop(0, '#f1c40f'); grad.addColorStop(0.5, '#fff'); grad.addColorStop(1, '#f39c12');
-                    ctx.fillStyle = grad; ctx.fill();
-                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = '#b7950b'; ctx.font = 'bold 16px sans-serif';
-                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('₪', 0, 1);
-                    if (frameCount % 30 < 15) { ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(8, -8, 3, 0, Math.PI * 2); ctx.fill(); }
-                } else if (this.type === 'snake') {
-                    ctx.save();
-                    ctx.lineWidth = 12; ctx.strokeStyle = 'white'; ctx.lineCap = 'round';
-                    ctx.beginPath(); ctx.moveTo(0, -20); ctx.quadraticCurveTo(20, -10, 0, 0); ctx.quadraticCurveTo(-20, 10, 0, 20); ctx.stroke();
-                    ctx.restore();
-                    ctx.beginPath(); ctx.moveTo(0, -20); ctx.quadraticCurveTo(20, -10, 0, 0); ctx.quadraticCurveTo(-20, 10, 0, 20);
-                    ctx.lineWidth = 9; ctx.strokeStyle = '#e74c3c'; ctx.lineCap = 'round'; ctx.stroke();
-                    ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(8, -8, 2.5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(-8, 8, 2.5, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(0, 20, 9, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill();
-                    ctx.beginPath(); ctx.arc(0, 20, 7, 0, Math.PI * 2); ctx.fillStyle = '#e74c3c'; ctx.fill();
-                    ctx.fillStyle = 'yellow'; ctx.beginPath(); ctx.arc(2, 19, 1.5, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.moveTo(0, 26); ctx.lineTo(0, 33); ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 1; ctx.stroke();
-                } else if (this.type === 'idol') {
-                    ctx.save(); ctx.scale(1.4, 1.4);
-                    ctx.fillStyle = '#FFD700'; ctx.strokeStyle = '#B8860B'; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.ellipse(-2, 5, 14, 11, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-                    const legPath = (x) => { ctx.beginPath(); ctx.moveTo(x, 12); ctx.lineTo(x, 22); ctx.lineTo(x + 4, 22); ctx.lineTo(x + 4, 12); ctx.fill(); ctx.stroke(); };
-                    legPath(-10); legPath(4);
-                    ctx.translate(8, -4); ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(-8, -2); ctx.lineTo(-12, -4); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(-4, -6); ctx.quadraticCurveTo(-6, -14, -2, -14); ctx.moveTo(4, -6); ctx.quadraticCurveTo(6, -14, 2, -14); ctx.stroke();
-                    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(-3, 0, 1.5, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.arc(3, 0, 1.5, 0, Math.PI * 2); ctx.fill();
-                    ctx.beginPath(); ctx.arc(0, 3, 2, 0, Math.PI, false); ctx.stroke();
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.beginPath(); ctx.arc(-4, -4, 2, 0, Math.PI * 2); ctx.fill();
-                    ctx.restore();
-                } else if (this.type === 'magnet') {
-                    ctx.save(); ctx.scale(1.2, 1.2);
-                    ctx.strokeStyle = 'white'; ctx.lineWidth = 4; ctx.strokeText('🧲', 0, 0);
-                    ctx.font = "30px sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🧲', 0, 0);
-                    ctx.restore();
-                } else if (this.type === 'bitter_water') {
-                    ctx.save(); ctx.scale(1.2, 1.2);
-                    ctx.beginPath(); ctx.arc(0, 5, 12, 0, Math.PI * 2); ctx.fillStyle = '#8e44ad'; ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.fillStyle = '#5e3370'; ctx.fillRect(-5, -15, 10, 10);
-                    ctx.fillStyle = 'white'; ctx.font = "12px sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('☠️', 0, 5);
-                    ctx.restore();
+                    const size = baseSize * scaleFactor;
+                    ctx.drawImage(img, -size / 2, -size / 2, size, size);
                 } else {
-                    const emojiMap = { 'quail': '🍗', 'scroll': '📜' };
-                    ctx.font = "40px sans-serif"; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.strokeText(emojiMap[this.type], 0, 0); ctx.fillText(emojiMap[this.type], 0, 0);
+                    // 이미지 로드 실패 시 백업 렌더링 (텍스트/도형)
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '20px sans-serif';
+                    ctx.fillText('?', 0, 0);
                 }
+
                 ctx.restore();
             }
         }
