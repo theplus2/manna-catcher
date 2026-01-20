@@ -206,16 +206,42 @@ function openCollection() {
     }
 }
 
-function openRanking() {
+async function openRanking() {
     document.getElementById('ranking-screen').classList.remove('hidden');
     const list = document.getElementById('rank-list');
-    list.innerHTML = '';
-    savedData.highScores.sort((a, b) => b.score - a.score).slice(0, 5).forEach((r, i) => {
-        list.innerHTML += `<li style="padding:15px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between;">
-        <span>${i + 1}위</span> <span>${r.score}점 (${r.day}일차)</span>
-    </li>`;
-    });
-    if (!list.innerHTML) list.innerHTML = "<li style='padding:20px; text-align:center;'>기록이 없습니다.</li>";
+    list.innerHTML = '<li style="padding:20px; text-align:center;">불러오는 중...</li>';
+
+    // 로컬 랭킹 표시 (기존 유지)
+    // savedData.highScores.sort((a, b) => b.score - a.score).slice(0, 5).forEach((r, i) => { ... });
+
+    // Firebase 랭킹 불러오기
+    if (window.Leaderboard) {
+        const scores = await window.Leaderboard.getScores(10);
+        list.innerHTML = ''; // 초기화
+
+        if (scores.length === 0) {
+            list.innerHTML = "<li style='padding:20px; text-align:center;'>기록이 없습니다. (API 키 확인 필요)</li>";
+        } else {
+            scores.forEach((r, i) => {
+                const date = r.date ? new Date(r.date.seconds * 1000).toLocaleDateString() : '';
+                // 1~3위 강조
+                let rankStyle = "font-weight:bold;";
+                if (i === 0) rankStyle += "color:#f1c40f; font-size:1.1em;";
+                else if (i === 1) rankStyle += "color:#95a5a6;";
+                else if (i === 2) rankStyle += "color:#cd7f32;";
+
+                list.innerHTML += `<li style="padding:15px 10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <span style="${rankStyle}">${i + 1}위 ${r.name || '익명'}</span> 
+                    <div style="text-align:right;">
+                        <span style="display:block; font-weight:bold; color:#27ae60;">${r.score}점</span>
+                        <span style="font-size:12px; color:#888;">${r.day}일차 (${date})</span>
+                    </div>
+                </li>`;
+            });
+        }
+    } else {
+        list.innerHTML = "<li style='padding:20px; text-align:center;'>리더보드 연결 실패</li>";
+    }
 }
 
 function togglePause() {
@@ -784,6 +810,19 @@ function gameOver() {
     savedData.shekels += gameState.shekels;
     savedData.highScores.push({ score: gameState.score, day: gameState.day });
     saveData();
+
+    // Firebase에 점수 전송
+    if (window.Leaderboard && gameState.score > 0) {
+        // 사용자 이름 입력 받기 (간단히 prompt 사용, 추후 UI 개선 가능)
+        // 게임 오버 화면 뜨기 전에 비동기로 처리하지 않고, 화면 뜬 후 1초 뒤에 입력 받게 함
+        setTimeout(() => {
+            const name = prompt("랭킹에 등록할 이름을 입력하세요:", "이름없는 순례자");
+            if (name) {
+                window.Leaderboard.submitScore(name, gameState.score, gameState.day);
+            }
+        }, 1000);
+    }
+
     document.getElementById('final-day-display').innerText = `제 ${gameState.day}일차, 광야에서 잠들다`;
     document.getElementById('final-score').innerText = gameState.score;
     document.getElementById('final-shekel').innerText = gameState.shekels;
