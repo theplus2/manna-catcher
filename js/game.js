@@ -834,11 +834,20 @@ function gameOver() {
     document.getElementById('pause-btn').style.display = 'none';
     bgm.pause();
 
+    // [수정] 버튼 숨기기 (이름 입력 강제)
+    const controls = document.getElementById('gameover-controls');
+    if (controls) controls.classList.add('hidden');
+
     // Firebase에 점수 전송 (모달 띄우기)
     if (window.Leaderboard && gameState.score > 0) {
-        setTimeout(() => {
-            openNameInputModal(null); // 콜백 없음 (그냥 모달만 닫음)
-        }, 1000);
+        // [수정] 지연 시간 없이 즉시 실행
+        openNameInputModal(() => {
+            // 콜백: 모달이 닫히면 버튼 보이기
+            if (controls) controls.classList.remove('hidden');
+        });
+    } else {
+        // 점수가 0이거나 리더보드 없으면 바로 버튼 보임
+        if (controls) controls.classList.remove('hidden');
     }
 }
 
