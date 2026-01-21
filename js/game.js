@@ -158,6 +158,7 @@ let fpsInterval = 1000 / fps;
 let now, then, elapsed;
 let gameLoopId;
 let frameCount = 0;
+let pendingScoreSubmitCallback = null;
 
 function closeScreens() {
     document.getElementById('collection-screen').classList.add('hidden');
@@ -262,7 +263,20 @@ function togglePause() {
 }
 
 function quitGame() {
+    // 점수가 0보다 크면 랭킹 등록 모달 띄우기
+    if (gameState.score > 0) {
+        openNameInputModal(() => {
+            finalizeQuit();
+        });
+    } else {
+        finalizeQuit();
+    }
+}
+
+function finalizeQuit() {
     savedData.shekels += gameState.shekels;
+    // [수정] 점수 저장은 서버 전송 시 하므로 여기서는 로컬 히스토리만? 
+    // 로컬 히스토리도 서버 전송 성공 여부와 관계없이 남기는 게 좋음.
     if (gameState.score > 0) {
         savedData.highScores.push({ score: gameState.score, day: gameState.day });
     }
@@ -811,26 +825,56 @@ function gameOver() {
     savedData.highScores.push({ score: gameState.score, day: gameState.day });
     saveData();
 
-    // Firebase에 점수 전송
-    if (window.Leaderboard && gameState.score > 0) {
-        // 사용자 이름 입력 받기 (간단히 prompt 사용, 추후 UI 개선 가능)
-        // 게임 오버 화면 뜨기 전에 비동기로 처리하지 않고, 화면 뜬 후 1초 뒤에 입력 받게 함
-        setTimeout(() => {
-            const name = prompt("랭킹에 등록할 이름을 입력하세요:", "이름없는 순례자");
-            if (name) {
-                window.Leaderboard.submitScore(name, gameState.score, gameState.day);
-            }
-        }, 1000);
-    }
-
     document.getElementById('final-day-display').innerText = `제 ${gameState.day}일차, 광야에서 잠들다`;
     document.getElementById('final-score').innerText = gameState.score;
     document.getElementById('final-shekel').innerText = gameState.shekels;
+
     document.getElementById('gameover-screen').classList.remove('hidden');
     document.getElementById('touch-guide').classList.add('hidden');
     document.getElementById('pause-btn').style.display = 'none';
     bgm.pause();
+
+    // Firebase에 점수 전송 (모달 띄우기)
+    if (window.Leaderboard && gameState.score > 0) {
+        setTimeout(() => {
+            openNameInputModal(null); // 콜백 없음 (그냥 모달만 닫음)
+        }, 1000);
+    }
 }
+
+function openNameInputModal(callback) {
+    pendingScoreSubmitCallback = callback;
+    document.getElementById('name-input-modal').classList.remove('hidden');
+    document.getElementById('player-name-input').value = "";
+    document.getElementById('player-name-input').focus();
+}
+
+// 전역으로 노출하여 HTML에서 호출 가능하도록 함
+window.submitPlayerScore = async function () {
+    const input = document.getElementById('player-name-input');
+    const name = input.value.trim();
+
+    if (!name) {
+        alert("이름을 입력해주세요.");
+        return;
+    }
+
+    if (window.Leaderboard) {
+        const success = await window.Leaderboard.submitScore(name, gameState.score, gameState.day);
+        if (success) {
+            showToast("랭킹 등록 완료!");
+        } else {
+            showToast("랭킹 등록 실패...");
+        }
+    }
+
+    document.getElementById('name-input-modal').classList.add('hidden');
+
+    if (pendingScoreSubmitCallback) {
+        pendingScoreSubmitCallback();
+        pendingScoreSubmitCallback = null;
+    }
+};
 
 const input = { left: false, right: false };
 window.onkeydown = e => { if (e.key === 'ArrowLeft') input.left = true; if (e.key === 'ArrowRight') input.right = true; };
