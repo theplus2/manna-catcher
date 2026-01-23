@@ -868,13 +868,16 @@ window.submitPlayerScore = async function () {
         return;
     }
 
-    if (window.Leaderboard) {
+    if (window.Leaderboard && window.Leaderboard.isReady()) {
         const success = await window.Leaderboard.submitScore(name, gameState.score, gameState.day);
         if (success) {
             showToast("랭킹 등록 완료!");
         } else {
             showToast("랭킹 등록 실패...");
         }
+    } else if (window.Leaderboard && !window.Leaderboard.isReady()) {
+        showToast("서버 연결 실패 - 오프라인 모드");
+        console.warn("Leaderboard not ready - Firebase not initialized");
     }
 
     document.getElementById('name-input-modal').classList.add('hidden');

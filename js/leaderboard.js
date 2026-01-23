@@ -23,9 +23,17 @@ try {
 
 // 전역 스코프에 리더보드 API 노출
 window.Leaderboard = {
+    // Firebase 초기화 상태 확인
+    isReady: function () {
+        return isInitialized;
+    },
+
     // 점수 제출
     submitScore: async function (name, score, day) {
-        if (!isInitialized) return;
+        if (!isInitialized) {
+            console.warn("Firebase not initialized - score not submitted");
+            return false;
+        }
 
         try {
             await addDoc(collection(db, "leaderboard"), {
